@@ -13,6 +13,8 @@ import com.example.udlearning.ui.components.CustomTextField
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.udlearning.ui.theme.color.RedPrimary
 import com.example.udlearning.ui.theme.color.White
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun RecoveryScreen(navController: NavController) {
@@ -52,4 +54,16 @@ fun RecoveryScreen(navController: NavController) {
             Text("Cambiar contraseña")
         }
     }
+}
+
+@Preview(name = "Modo Claro", showBackground = true)
+@Preview(
+    name = "Modo Oscuro",
+    showBackground = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun RecoveryScreenPreview() {
+    val navController = rememberNavController()
+    RecoveryScreen(navController = navController)
 }

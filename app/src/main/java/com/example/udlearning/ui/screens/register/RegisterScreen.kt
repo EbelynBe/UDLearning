@@ -13,13 +13,21 @@ import com.example.udlearning.ui.components.CustomTextField
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.udlearning.ui.theme.color.RedPrimary
 import com.example.udlearning.ui.theme.color.White
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: RegisterViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    val email = viewModel.email
+    val password = viewModel.password
+    val confirmPassword = viewModel.confirmPassword
+    val registerError = viewModel.errorMessage
+    val successMessage = viewModel.successMessage
+    val isLoading = viewModel.isLoading
 
     Column(
         modifier = Modifier
@@ -34,22 +42,45 @@ fun RegisterScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(40.dp))
 
         Text("Correo institucional", color = White)
-        CustomTextField(email, { email = it }, "Correo")
+        CustomTextField(email, viewModel::onEmailChange, "Correo")
 
         Text("Contraseña", color = White)
-        CustomTextField(password, { password = it }, "Contraseña", true)
+        CustomTextField(password, viewModel::onPasswordChange, "Contraseña", true)
 
         Text("Confirmar Contraseña", color = White)
-        CustomTextField(confirmPassword, { confirmPassword = it }, "Confirmar", true)
+        CustomTextField(confirmPassword, viewModel::onConfirmPasswordChange, "Confirmar", true)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = { navController.popBackStack() },
+            onClick = { viewModel.register() },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(20.dp),
+            enabled = !isLoading
         ) {
-            Text("Registrar")
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Text("Registrar")
+            }
+        }
+
+        // 🔥 Mensajes
+        registerError?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
+
+        successMessage?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(it, color = White)
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun RegisterScreenPreview() {
+    val navController = rememberNavController()
+    RegisterScreen(navController = navController)
 }
