@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225347731169",
+    "project_id": "udlearning-b2359",
+    "storage_bucket": "udlearning-b2359.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225347731169:android:f8994fef589bab149881a0",
+        "android_client_info": {
+          "package_name": "com.example.udlearning"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVIUdj1RyKxRUnRAXliLpZ7-PvW5DC6qI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
