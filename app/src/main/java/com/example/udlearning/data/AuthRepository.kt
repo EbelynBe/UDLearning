@@ -20,18 +20,19 @@ class AuthRepository {
     fun register(
         email: String,
         password: String,
-        onResult: (Boolean, String?) -> Unit
+        onResult: (Boolean, String?, String?) -> Unit // (success, errorMessage, uid)
     ) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
 
                     // 🔥 Enviar verificación
-                    auth.currentUser?.sendEmailVerification()
+                    val user = auth.currentUser
+                    user?.sendEmailVerification()
 
-                    onResult(true, null)
+                    onResult(true, null, user?.uid)
                 } else {
-                    onResult(false, task.exception?.message)
+                    onResult(false, task.exception?.message, null)
                 }
             }
     }
