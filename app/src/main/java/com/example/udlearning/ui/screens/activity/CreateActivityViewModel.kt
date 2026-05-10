@@ -135,7 +135,19 @@ class CreateActivityViewModel : ViewModel() {
                 val pairs = matchConcepts.zip(matchAnswers).map { mapOf("concepto" to it.first, "respuesta" to it.second) }
                 contenido["pares"] = pairs
             }
-            "completar", "traduccion" -> {
+            "completar" -> {
+                val regex = "\\[(.*?)\\]".toRegex()
+                val match = regex.find(enunciado)
+                if (match != null) {
+                    val extracted = match.groupValues[1]
+                    contenido["respuesta_esperada"] = extracted
+                    contenido["pregunta"] = enunciado.replace("[$extracted]", "__________")
+                } else {
+                    errorMessage = "Debes indicar la respuesta entre corchetes [ ] dentro de la frase."
+                    return
+                }
+            }
+            "traduccion" -> {
                 if (expectedAnswer.isBlank()) {
                     errorMessage = "La respuesta esperada no puede estar vacía."
                     return
@@ -162,11 +174,13 @@ class CreateActivityViewModel : ViewModel() {
 
             val newOrder = activities.size + 1
             
+            val processedPregunta = contenido["pregunta"] as? String ?: enunciado
+            
             val activity = Activity(
                 titulo = if (selectedType == "quiz") "Pregunta de Quiz" else selectedType.replaceFirstChar { it.uppercase() },
                 tipo = selectedType,
-                descripcion = enunciado,
-                cantidad = 1, // Se puede ajustar, pero usualmente es 1 para este formato dinámico
+                descripcion = if (selectedType == "completar") processedPregunta else enunciado,
+                cantidad = 1,
                 orden = newOrder,
                 contenido = contenido,
                 puntajeMaximo = puntaje

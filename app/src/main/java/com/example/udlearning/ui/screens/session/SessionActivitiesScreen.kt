@@ -194,8 +194,16 @@ fun ActivityCard(activity: Activity, isTeacher: Boolean = false, onEdit: () -> U
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
+
+                // Process description for students to hide answers
+                val displayDescription = if (!isTeacher && activity.tipo == "completar") {
+                    activity.descripcion.replace("\\[(.*?)\\]".toRegex(), "__________")
+                } else {
+                    activity.descripcion
+                }
+
                 Text(
-                    text = activity.descripcion,
+                    text = displayDescription,
                     color = androidx.compose.ui.graphics.Color(0xCCFFFFFF),
                     fontSize = 14.sp
                 )

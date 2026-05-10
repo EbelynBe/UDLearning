@@ -137,7 +137,22 @@ fun CreateActivityScreen(
             when (viewModel.selectedType) {
                 "quiz" -> QuizForm(viewModel)
                 "emparejamiento" -> MatchingForm(viewModel)
-                "completar", "traduccion" -> SingleAnswerForm(viewModel)
+                "completar" -> {
+                    Text(
+                        text = "Instrucción",
+                        color = YellowText,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "Escribe la frase completa y encierra la palabra a ocultar entre corchetes.\nEj: The sky is [blue] today.",
+                        color = Color(0xCCFFFFFF),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+                "traduccion" -> SingleAnswerForm(viewModel)
             }
 
             // Common Field: Puntaje Máximo

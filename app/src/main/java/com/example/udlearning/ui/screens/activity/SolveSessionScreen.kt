@@ -21,6 +21,12 @@ import androidx.navigation.NavController
 import com.example.udlearning.data.model.Activity
 import com.example.udlearning.ui.components.TitleHeader
 import com.example.udlearning.ui.theme.color.*
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.LayoutCoordinates
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,24 +86,36 @@ fun SolveSessionScreen(
                     )
 
                     var isValid by remember(currentActivity.activityId) { mutableStateOf(false) }
+                    var hasSelected by remember(currentActivity.activityId) { mutableStateOf(false) }
 
                     Column(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        Text(
-                            text = currentActivity.descripcion,
-                            color = White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 24.dp)
-                        )
+                        if (currentActivity.tipo != "completar") {
+                            Text(
+                                text = currentActivity.descripcion,
+                                color = White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 24.dp)
+                            )
+                        }
 
                         when (currentActivity.tipo) {
-                            "quiz" -> SolveQuizForm(currentActivity) { isValid = it }
-                            "completar", "traduccion" -> SolveStringForm(currentActivity, viewModel) { isValid = it }
-                            "emparejamiento" -> SolveMatchingForm(currentActivity) { isValid = it }
+                            "quiz" -> SolveQuizForm(currentActivity) { valid, selected -> 
+                                isValid = valid
+                                hasSelected = selected 
+                            }
+                            "completar", "traduccion" -> SolveStringForm(currentActivity, viewModel) { valid, selected -> 
+                                isValid = valid
+                                hasSelected = selected
+                            }
+                            "emparejamiento" -> SolveMatchingForm(currentActivity) { valid, selected -> 
+                                isValid = valid
+                                hasSelected = selected
+                            }
                             else -> Text("Tipo no soportado: ${currentActivity.tipo}", color = White)
                         }
 
@@ -110,7 +128,11 @@ fun SolveSessionScreen(
                             },
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             shape = RoundedCornerShape(25.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = ButtonBackground)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (hasSelected) ButtonBackground else Color(0x33FFFFFF),
+                                contentColor = if (hasSelected) DarkGrayText else Color(0x66FFFFFF)
+                            ),
+                            enabled = hasSelected
                         ) {
                             Text(
                                 text = "Verificar",
@@ -250,13 +272,15 @@ fun FeedbackBottomSheet(
 }
 
 @Composable
-fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
+fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Unit) {
     val options = activity.contenido["opciones"] as? List<String> ?: emptyList()
     val correctAnswer = activity.contenido["respuesta_correcta"] as? String ?: ""
     var selectedOption by remember(activity.activityId) { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedOption, activity.activityId) {
-        onValidityChange(selectedOption != null && selectedOption?.trim().equals(correctAnswer.trim(), ignoreCase = true))
+        val isValid = selectedOption?.trim().equals(correctAnswer.trim(), ignoreCase = true)
+        val hasSelected = selectedOption != null
+        onValidityChange(isValid, hasSelected)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -272,7 +296,7 @@ fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
             ) {
                 Text(
                     text = option,
-                    color = if (isSelected) DarkGrayText else White,
+                    color = DarkGrayText,
                     fontSize = 16.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
@@ -282,31 +306,74 @@ fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
 }
 
 @Composable
-fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onValidityChange: (Boolean) -> Unit) {
+fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onValidityChange: (Boolean, Boolean) -> Unit) {
     val expectedAnswer = activity.contenido["respuesta_esperada"] as? String ?: ""
+    val pregunta = activity.contenido["pregunta"] as? String ?: ""
     var input by remember(activity.activityId) { mutableStateOf("") }
 
     LaunchedEffect(input, activity.activityId) {
-        onValidityChange(viewModel.verifyStringAnswer(input, expectedAnswer))
+        val isValid = viewModel.verifyStringAnswer(input, expectedAnswer)
+        // Validation: Empty space is always incorrect/invalid
+        val hasSelected = input.isNotBlank()
+        onValidityChange(isValid && hasSelected, hasSelected)
     }
 
-    OutlinedTextField(
-        value = input,
-        onValueChange = { input = it },
-        modifier = Modifier.fillMaxWidth(),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = GrayField,
-            unfocusedContainerColor = GrayField,
-            focusedTextColor = White,
-            unfocusedTextColor = White
-        ),
-        shape = RoundedCornerShape(12.dp),
-        placeholder = { Text("Escribe tu respuesta aquí...", color = Color(0x99FFFFFF)) }
-    )
+    if (activity.tipo == "completar" && pregunta.contains("__________")) {
+        val parts = pregunta.split("__________")
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                if (parts[0].isNotBlank()) {
+                    Text(parts[0], color = White, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                
+                // Inline TextField for the blank
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { if (it.length <= expectedAnswer.length + 5) input = it },
+                    modifier = Modifier.widthIn(min = 100.dp, max = 200.dp),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = GrayField,
+                        unfocusedContainerColor = GrayField,
+                        focusedTextColor = DarkGrayText,
+                        unfocusedTextColor = DarkGrayText,
+                        focusedIndicatorColor = YellowText
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                )
+
+                if (parts.size > 1 && parts[1].isNotBlank()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(parts[1], color = White, fontSize = 18.sp)
+                }
+            }
+        }
+    } else {
+        // Fallback or Translation type
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = GrayField,
+                unfocusedContainerColor = GrayField,
+                focusedTextColor = DarkGrayText,
+                unfocusedTextColor = DarkGrayText
+            ),
+            shape = RoundedCornerShape(12.dp),
+            placeholder = { Text("Escribe tu respuesta aquí...", color = Color(0x66000000)) }
+        )
+    }
 }
 
 @Composable
-fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
+fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Unit) {
     val pares = activity.contenido["pares"] as? List<Map<String, String>> ?: emptyList()
     val concepts = remember(activity.activityId) { pares.map { it["concepto"] ?: "" } }
     val answers = remember(activity.activityId) { pares.map { it["respuesta"] ?: "" }.shuffled() }
@@ -314,6 +381,11 @@ fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
     var selectedConcept by remember(activity.activityId) { mutableStateOf<String?>(null) }
     var selectedAnswer by remember(activity.activityId) { mutableStateOf<String?>(null) }
     val matches = remember(activity.activityId) { mutableStateMapOf<String, String>() }
+
+    // Drag and Drop state
+    var draggedConcept by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val dropZones = remember { mutableStateMapOf<String, androidx.compose.ui.layout.LayoutCoordinates>() }
 
     LaunchedEffect(matches.size, activity.activityId) {
         var isAllCorrect = matches.size == pares.size
@@ -327,7 +399,8 @@ fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
                 }
             }
         }
-        onValidityChange(isAllCorrect)
+        val hasSelected = matches.isNotEmpty()
+        onValidityChange(isAllCorrect, hasSelected)
     }
 
     LaunchedEffect(selectedConcept, selectedAnswer, activity.activityId) {
@@ -338,42 +411,103 @@ fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean) -> Unit) {
         }
     }
 
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            concepts.forEach { concept ->
-                val isMatched = matches.containsKey(concept)
-                val isSelected = selectedConcept == concept
-                val bgColor = if (isMatched) Color(0xFF4CAF50) else if (isSelected) YellowText else GrayField
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(bgColor)
-                        .clickable { if (!isMatched) selectedConcept = concept else matches.remove(concept) }
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(concept, color = if (bgColor == GrayField) White else DarkGrayText, fontWeight = FontWeight.Bold)
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            // Column 1: Concepts
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                concepts.forEach { concept ->
+                    val isMatched = matches.containsKey(concept)
+                    val isSelected = selectedConcept == concept
+                    val isBeingDragged = draggedConcept == concept
+                    
+                    val bgColor = if (isMatched) Color(0xFF4CAF50) else if (isSelected) YellowText else GrayField
+                    
+                    var cardCoordinates: LayoutCoordinates? by remember { mutableStateOf(null) }
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isBeingDragged) bgColor.copy(alpha = 0.5f) else bgColor)
+                            .onGloballyPositioned { cardCoordinates = it }
+                            .then(
+                                if (!isMatched) {
+                                    Modifier.pointerInput(concept) {
+                                        detectDragGestures(
+                                            onDragStart = { draggedConcept = concept },
+                                            onDragEnd = {
+                                                draggedConcept = null
+                                                dragOffset = androidx.compose.ui.geometry.Offset.Zero
+                                            },
+                                            onDragCancel = { 
+                                                draggedConcept = null
+                                                dragOffset = androidx.compose.ui.geometry.Offset.Zero
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                dragOffset += dragAmount
+                                                
+                                                val currentCoord = cardCoordinates
+                                                if (currentCoord != null) {
+                                                    val globalPointer = change.position + currentCoord.positionInWindow()
+                                                    dropZones.forEach { (ans, coords) ->
+                                                        if (coords.isAttached && coords.boundsInWindow().contains(globalPointer)) {
+                                                            matches[concept] = ans
+                                                            draggedConcept = null
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                } else Modifier
+                            )
+                            .clickable { if (!isMatched) selectedConcept = concept else matches.remove(concept) }
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(concept, color = if (bgColor == GrayField) White else DarkGrayText, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Column 2: Answers (Drop Zones)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                answers.forEach { answer ->
+                    val isMatched = matches.containsValue(answer)
+                    val isSelected = selectedAnswer == answer
+                    val bgColor = if (isMatched) Color(0xFF4CAF50) else if (isSelected) YellowText else GrayField
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(bgColor)
+                            .onGloballyPositioned { dropZones[answer] = it }
+                            .clickable { if (!isMatched) selectedAnswer = answer }
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(answer, color = if (bgColor == GrayField) White else DarkGrayText, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            answers.forEach { answer ->
-                val isMatched = matches.containsValue(answer)
-                val isSelected = selectedAnswer == answer
-                val bgColor = if (isMatched) Color(0xFF4CAF50) else if (isSelected) YellowText else GrayField
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(bgColor)
-                        .clickable { if (!isMatched) selectedAnswer = answer }
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(answer, color = if (bgColor == GrayField) White else DarkGrayText, fontWeight = FontWeight.Bold)
-                }
+        
+        // Drag overlay
+        draggedConcept?.let { concept ->
+            Box(
+                modifier = Modifier
+                    .offset { androidx.compose.ui.unit.IntOffset(dragOffset.x.toInt(), dragOffset.y.toInt()) }
+                    .width(150.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(YellowText.copy(alpha = 0.9f))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(concept, color = DarkGrayText, fontWeight = FontWeight.Bold)
             }
         }
     }
