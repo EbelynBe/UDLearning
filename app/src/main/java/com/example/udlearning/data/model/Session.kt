@@ -8,8 +8,7 @@ data class Session(
     val tema: String = "",
     val nivel: String = "",
     val objetivo: String = "",
-    val tipoActividad: String = "",
-    val estado: String = "activa", // activa | proxima | finalizada | archivada
+    val estado: String = "pendiente", // activa, pendiente, finalizada, archivada
     val fechaInicio: Timestamp? = null,
     val fechaFin: Timestamp? = null,
     val duracion: Int = 0,
@@ -21,10 +20,12 @@ data class Session(
 data class Activity(
     val activityId: String = "",
     val titulo: String = "",
-    val tipo: String = "", // quiz | completar | emparejamiento
+    val tipo: String = "", // quiz | completar | emparejamiento | traduccion
     val descripcion: String = "",
     val cantidad: Int = 0,
-    val orden: Int = 0
+    val orden: Int = 0,
+    val contenido: Map<String, Any> = emptyMap(),
+    val puntajeMaximo: Int = 0
 )
 
 data class Participant(

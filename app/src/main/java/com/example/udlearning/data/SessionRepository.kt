@@ -3,6 +3,8 @@ package com.example.udlearning.data
 import com.example.udlearning.data.model.Activity
 import com.example.udlearning.data.model.Session
 import com.example.udlearning.data.model.Participant
+import com.example.udlearning.data.model.SessionAccess
+import com.example.udlearning.data.model.UserHistory
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
 
@@ -18,7 +20,6 @@ class SessionRepository {
             .document(documentId)
             .set(newSession)
             .addOnSuccessListener {
-                // If there are activities, save them in the subcollection
                 if (activities.isNotEmpty()) {
                     var remaining = activities.size
                     var hasError = false
@@ -159,6 +160,83 @@ class SessionRepository {
             }
             .addOnFailureListener { exception ->
                 onResult(0, exception.message)
+            }
+    }
+
+    fun addActivityToSession(sessionId: String, activity: Activity, onResult: (Boolean, String?) -> Unit) {
+        val actId = if (activity.activityId.isEmpty()) UUID.randomUUID().toString() else activity.activityId
+        val newActivity = activity.copy(activityId = actId)
+        
+        db.collection("sessions")
+            .document(sessionId)
+            .collection("activities")
+            .document(actId)
+            .set(newActivity)
+            .addOnSuccessListener { onResult(true, null) }
+            .addOnFailureListener { exception -> onResult(false, exception.message) }
+    }
+
+    fun getActivity(sessionId: String, activityId: String, onResult: (Activity?, String?) -> Unit) {
+        db.collection("sessions")
+            .document(sessionId)
+            .collection("activities")
+            .document(activityId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val activity = document.toObject(Activity::class.java)?.copy(activityId = document.id)
+                    onResult(activity, null)
+                } else {
+                    onResult(null, "Actividad no encontrada")
+                }
+            }
+            .addOnFailureListener { exception ->
+                onResult(null, exception.message)
+            }
+    }
+
+    fun startSessionAccess(access: SessionAccess, onResult: (String?) -> Unit) {
+        val docId = if (access.accessId.isEmpty()) UUID.randomUUID().toString() else access.accessId
+        val finalAccess = access.copy(accessId = docId)
+        
+        db.collection("acceso_sesion")
+            .document(docId)
+            .set(finalAccess)
+            .addOnSuccessListener { onResult(docId) }
+            .addOnFailureListener { onResult(null) }
+    }
+
+    fun completeSessionAccess(accessId: String, score: Int, onResult: (Boolean) -> Unit) {
+        db.collection("acceso_sesion")
+            .document(accessId)
+            .update(
+                "estado", "completada",
+                "puntaje", score,
+                "fechaCompletado", com.google.firebase.Timestamp.now()
+            )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun saveUserHistory(userId: String, history: UserHistory, onResult: (Boolean) -> Unit) {
+        db.collection("users")
+            .document(userId)
+            .collection("historial")
+            .add(history)
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
+    fun getSessionAccessRecords(sessionId: String, onResult: (List<SessionAccess>, String?) -> Unit) {
+        db.collection("acceso_sesion")
+            .whereEqualTo("sessionId", sessionId)
+            .get()
+            .addOnSuccessListener { result ->
+                val records = result.documents.mapNotNull { it.toObject(SessionAccess::class.java) }
+                onResult(records, null)
+            }
+            .addOnFailureListener { exception ->
+                onResult(emptyList(), exception.message)
             }
     }
 }

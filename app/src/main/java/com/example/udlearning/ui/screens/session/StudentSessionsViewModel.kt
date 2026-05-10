@@ -54,7 +54,7 @@ class StudentSessionsViewModel : ViewModel() {
                 }
             } else {
                 isLoading = false
-                errorMessage = error ?: "Usuario no tiene un grupo asignado"
+                errorMessage = "⚠️ Tu cuenta no tiene un grupo asignado. Pide a tu docente que te agregue a un grupo para ver las sesiones disponibles."
             }
         }
     }

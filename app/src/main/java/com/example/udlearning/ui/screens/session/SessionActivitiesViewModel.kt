@@ -24,6 +24,9 @@ class SessionActivitiesViewModel : ViewModel() {
     var activities by mutableStateOf<List<Activity>>(emptyList())
         private set
 
+    var isTeacher by mutableStateOf(false)
+        private set
+
     var isLoading by mutableStateOf(true)
         private set
 
@@ -60,6 +63,22 @@ class SessionActivitiesViewModel : ViewModel() {
                 }
 
                 session = sess
+
+                // --- Validation: check if teacher ---
+                if (sess.creadoPor == currentUser.uid) {
+                    isTeacher = true
+                    // Teacher bypassing student validations
+                    sessionRepository.getActivitiesForSession(sessionId) { resultList, actError ->
+                        if (actError != null) {
+                            accessError = actError
+                            isLoading = false
+                            return@getActivitiesForSession
+                        }
+                        activities = resultList.sortedBy { it.orden }
+                        isLoading = false
+                    }
+                    return@getSession
+                }
 
                 // --- Validation 1: estado must be "activa" ---
                 if (sess.estado != "activa") {

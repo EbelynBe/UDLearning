@@ -78,9 +78,6 @@ fun EditSessionScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Tipo de actividad", color = White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 4.dp))
-            CustomTextField(viewModel.activityType, viewModel::onActivityTypeChange, "")
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // ── Estado ──────────────────────────────────────────────────
@@ -142,6 +139,20 @@ fun EditSessionScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { navController.navigate("session_activities/${viewModel.session?.sessionId}") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(25.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+            ) {
+                Text("Ver / Editar actividades", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         // ── Error ────────────────────────────────────────────────────

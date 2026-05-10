@@ -76,9 +76,6 @@ fun CreateSessionScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Tipo de actividad", color = White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 4.dp))
-            CustomTextField(sessionViewModel.activityType, sessionViewModel::onActivityTypeChange, "")
-            
             Spacer(modifier = Modifier.height(24.dp))
             Spacer(modifier = Modifier.height(16.dp))
         }

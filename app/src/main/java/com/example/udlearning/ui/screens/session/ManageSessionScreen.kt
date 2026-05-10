@@ -100,6 +100,29 @@ fun ManageSessionScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
+            // Crear Actividad
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    navController.navigate("create_activity/${session.sessionId}")
+                }.padding(bottom = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828))
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(GreenTag),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("+", color = White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Crear actividad", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Añadir un nuevo ejercicio a la sesión", color = Color(0xCCFFFFFF), fontSize = 12.sp)
+                    }
+                }
+            }
+
             // Editar
             Card(
                 modifier = Modifier.fillMaxWidth().clickable {

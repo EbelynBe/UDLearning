@@ -35,8 +35,6 @@ class ManageSessionViewModel : ViewModel() {
         private set
     var learningObjective by mutableStateOf("")
         private set
-    var activityType by mutableStateOf("")
-        private set
     var estado by mutableStateOf("pendiente")
         private set
     var startDate by mutableStateOf("")
@@ -59,12 +57,22 @@ class ManageSessionViewModel : ViewModel() {
         
     var participantCount by mutableStateOf(0)
         private set
+
+    var accessRecords = mutableStateListOf<com.example.udlearning.data.model.SessionAccess>()
+        private set
+
+    fun loadStatistics() {
+        val sessionId = session?.sessionId ?: return
+        sessionRepository.getSessionAccessRecords(sessionId) { records, _ ->
+            accessRecords.clear()
+            accessRecords.addAll(records)
+        }
+    }
         
     fun onTitleChange(value: String) { title = value }
     fun onTopicChange(value: String) { topic = value }
     fun onLevelChange(value: String) { level = value }
     fun onLearningObjectiveChange(value: String) { learningObjective = value }
-    fun onActivityTypeChange(value: String) { activityType = value }
     fun onEstadoChange(value: String) { estado = value }
     fun onStartDateChange(value: String) { startDate = value }
     fun onEndDateChange(value: String) { endDate = value }
@@ -110,7 +118,6 @@ class ManageSessionViewModel : ViewModel() {
                     topic = it.tema
                     level = it.nivel
                     learningObjective = it.objetivo
-                    activityType = it.tipoActividad
                     estado = it.estado
                     // Convert timestamps to display strings
                     val fmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -118,6 +125,7 @@ class ManageSessionViewModel : ViewModel() {
                     endDate = it.fechaFin?.toDate()?.let { d -> fmt.format(d) } ?: ""
                     selectedGroupIds.clear()
                     selectedGroupIds.addAll(it.grupos)
+                    loadStatistics()
                 }
             }
         }
@@ -168,7 +176,7 @@ class ManageSessionViewModel : ViewModel() {
     fun updateSession(onSuccess: () -> Unit) {
         val currentSession = session ?: return
 
-        if (title.isEmpty() || topic.isEmpty() || level.isEmpty() || learningObjective.isEmpty() || activityType.isEmpty()) {
+        if (title.isEmpty() || topic.isEmpty() || level.isEmpty() || learningObjective.isEmpty()) {
             errorMessage = "Complete todos los campos obligatorios."
             return
         }
@@ -196,7 +204,6 @@ class ManageSessionViewModel : ViewModel() {
             tema = topic,
             nivel = level,
             objetivo = learningObjective,
-            tipoActividad = activityType,
             estado = estado,
             fechaInicio = Timestamp(startParsed),
             fechaFin = Timestamp(endParsed),

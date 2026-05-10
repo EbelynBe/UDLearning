@@ -17,6 +17,9 @@ import com.example.udlearning.ui.screens.session.TeacherSessionsScreen
 import com.example.udlearning.ui.screens.session.ManageSessionScreen
 import com.example.udlearning.ui.screens.session.ManageSessionViewModel
 import com.example.udlearning.ui.screens.session.EditSessionScreen
+import com.example.udlearning.ui.screens.activity.CreateActivityScreen
+import com.example.udlearning.ui.screens.activity.EditActivityScreen
+import com.example.udlearning.ui.screens.activity.SolveSessionScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
@@ -76,6 +79,32 @@ fun AppNavigation() {
             EditSessionScreen(
                 navController = navController,
                 viewModel = manageVm
+            )
+        }
+
+        composable("create_activity/{sessionId}") { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            CreateActivityScreen(
+                navController = navController,
+                sessionId = sessionId
+            )
+        }
+
+        composable("edit_activity/{sessionId}/{activityId}") { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            val activityId = backStackEntry.arguments?.getString("activityId") ?: return@composable
+            EditActivityScreen(
+                navController = navController,
+                sessionId = sessionId,
+                activityId = activityId
+            )
+        }
+
+        composable("solve_session/{sessionId}") { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            SolveSessionScreen(
+                navController = navController,
+                sessionId = sessionId
             )
         }
     }

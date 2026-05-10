@@ -133,14 +133,20 @@ fun SessionActivitiesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(viewModel.activities) { act ->
-                    ActivityCard(act)
+                    ActivityCard(
+                        activity = act,
+                        isTeacher = viewModel.isTeacher,
+                        onEdit = {
+                            navController.navigate("edit_activity/${sessionId}/${act.activityId}")
+                        }
+                    )
                 }
             }
         }
         
-        if (viewModel.accessError == null && !viewModel.isLoading) {
+        if (!viewModel.isTeacher && viewModel.activities.isNotEmpty()) {
             Button(
-                onClick = { /* Start session logic */ },
+                onClick = { navController.navigate("solve_session/${sessionId}") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
@@ -148,14 +154,14 @@ fun SessionActivitiesScreen(
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonBackground)
             ) {
-                Text("Iniciar sesión", color = DarkGrayText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Empezar actividades", color = DarkGrayText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
 @Composable
-fun ActivityCard(activity: Activity) {
+fun ActivityCard(activity: Activity, isTeacher: Boolean = false, onEdit: () -> Unit = {}) {
     val tagColor = when(activity.cantidad) {
         5 -> GreenTag
         else -> OrangeTag
@@ -169,7 +175,7 @@ fun ActivityCard(activity: Activity) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { if (isTeacher) onEdit() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFC62828)) // Transparent dark red
     ) {
@@ -178,9 +184,9 @@ fun ActivityCard(activity: Activity) {
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                 Text(
                     text = activity.titulo,
                     color = White,
@@ -195,15 +201,31 @@ fun ActivityCard(activity: Activity) {
                 )
             }
             
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(tagColor)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "${activity.cantidad}", color = White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text(text = suffix, color = White, fontSize = 10.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isTeacher) {
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(OrangeTag)
+                            .clickable { onEdit() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "✎", color = White, fontSize = 16.sp)
+                    }
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(tagColor)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "${activity.cantidad}", color = White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text(text = suffix, color = White, fontSize = 10.sp)
+                    }
                 }
             }
         }

@@ -29,8 +29,6 @@ class SessionViewModel : ViewModel() {
         private set
     var learningObjective by mutableStateOf("")
         private set
-    var activityType by mutableStateOf("")
-        private set
 
     // Screen 2: Schedule Session fields
     var availableGroups = mutableStateListOf<Group>()
@@ -67,7 +65,6 @@ class SessionViewModel : ViewModel() {
     fun onTopicChange(value: String) { topic = value }
     fun onLevelChange(value: String) { level = value }
     fun onLearningObjectiveChange(value: String) { learningObjective = value }
-    fun onActivityTypeChange(value: String) { activityType = value }
     
     fun toggleGroupSelection(groupId: String, isSelected: Boolean) {
         if (isSelected) {
@@ -81,7 +78,7 @@ class SessionViewModel : ViewModel() {
     fun onEndDateChange(value: String) { endDate = value }
 
     fun validateCreateSession(): Boolean {
-        if (title.isEmpty() || topic.isEmpty() || level.isEmpty() || learningObjective.isEmpty() || activityType.isEmpty()) {
+        if (title.isEmpty() || topic.isEmpty() || level.isEmpty() || learningObjective.isEmpty()) {
             errorMessage = "Complete todos los campos obligatorios."
             return false
         }
@@ -119,7 +116,6 @@ class SessionViewModel : ViewModel() {
             tema = topic,
             nivel = level,
             objetivo = learningObjective,
-            tipoActividad = activityType,
             estado = "pendiente",
             grupos = selectedGroupIds.toList(),
             fechaInicio = Timestamp(startParsed), 
@@ -127,16 +123,8 @@ class SessionViewModel : ViewModel() {
             creadoPor = FirebaseAuth.getInstance().currentUser?.uid ?: "currentUser"
         )
         
-        // Let's create an Activity based on user's inputted type as a mock or based on the type string
-        val activities = listOf(
-            Activity(
-                titulo = activityType,
-                tipo = "completar", // Sample default
-                descripcion = learningObjective,
-                cantidad = 5,
-                orden = 1
-            )
-        )
+        // Now creating a session starts with zero activities, teacher adds them later
+        val activities = emptyList<Activity>()
 
         repository.createSession(newSession, activities) { success, error ->
             isLoading = false
@@ -153,7 +141,6 @@ class SessionViewModel : ViewModel() {
         topic = ""
         level = ""
         learningObjective = ""
-        activityType = ""
         selectedGroupIds.clear()
         startDate = ""
         endDate = ""
