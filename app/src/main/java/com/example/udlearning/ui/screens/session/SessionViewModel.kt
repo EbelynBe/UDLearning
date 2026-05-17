@@ -30,6 +30,12 @@ class SessionViewModel : ViewModel() {
     var learningObjective by mutableStateOf("")
         private set
 
+    var isEvaluation by mutableStateOf(false)
+        private set
+
+    var duration by mutableStateOf("")
+        private set
+
     // Screen 2: Schedule Session fields
     var availableGroups = mutableStateListOf<Group>()
         private set
@@ -65,6 +71,11 @@ class SessionViewModel : ViewModel() {
     fun onTopicChange(value: String) { topic = value }
     fun onLevelChange(value: String) { level = value }
     fun onLearningObjectiveChange(value: String) { learningObjective = value }
+    fun onDurationChange(value: String) {
+        if (value.all { it.isDigit() }) {
+            duration = value
+        }
+    }
     
     fun toggleGroupSelection(groupId: String, isSelected: Boolean) {
         if (isSelected) {
@@ -76,6 +87,10 @@ class SessionViewModel : ViewModel() {
     
     fun onStartDateChange(value: String) { startDate = value }
     fun onEndDateChange(value: String) { endDate = value }
+
+    fun setIsEvaluation(value: Boolean) {
+        isEvaluation = value
+    }
 
     fun validateCreateSession(): Boolean {
         if (title.isEmpty() || topic.isEmpty() || level.isEmpty() || learningObjective.isEmpty()) {
@@ -120,6 +135,8 @@ class SessionViewModel : ViewModel() {
             grupos = selectedGroupIds.toList(),
             fechaInicio = Timestamp(startParsed), 
             fechaFin = Timestamp(endParsed),
+            duracion = duration.toIntOrNull() ?: 0,
+            isEvaluation = isEvaluation,
             creadoPor = FirebaseAuth.getInstance().currentUser?.uid ?: "currentUser"
         )
         
@@ -141,6 +158,7 @@ class SessionViewModel : ViewModel() {
         topic = ""
         level = ""
         learningObjective = ""
+        duration = ""
         selectedGroupIds.clear()
         startDate = ""
         endDate = ""

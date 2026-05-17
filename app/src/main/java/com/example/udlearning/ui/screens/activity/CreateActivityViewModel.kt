@@ -31,6 +31,9 @@ class CreateActivityViewModel : ViewModel() {
     var puntajeMaximo by mutableStateOf("1")
         private set
 
+    var porcentaje by mutableStateOf("")
+        private set
+
     // Campos para "quiz"
     var options = mutableStateListOf("Opción 1", "Opción 2")
         private set
@@ -52,6 +55,9 @@ class CreateActivityViewModel : ViewModel() {
     var feedback by mutableStateOf("")
         private set
 
+    var puntajeTotalActual by mutableStateOf(0)
+        private set
+
     fun onTypeSelected(type: String) {
         selectedType = type
         errorMessage = null
@@ -59,6 +65,7 @@ class CreateActivityViewModel : ViewModel() {
 
     fun onEnunciadoChange(value: String) { enunciado = value }
     fun onPuntajeChange(value: String) { puntajeMaximo = value }
+    fun onPorcentajeChange(value: String) { porcentaje = value }
 
     // Quiz options management
     fun updateOption(index: Int, value: String) {
@@ -103,15 +110,48 @@ class CreateActivityViewModel : ViewModel() {
     fun onExpectedAnswerChange(value: String) { expectedAnswer = value }
     fun onFeedbackChange(value: String) { feedback = value }
 
+    fun calcularPuntajeTotal(activities: List<Activity>): Int {
+        return activities.sumOf { it.puntajeMaximo }
+    }
+    fun calcularPorcentajeAcierto(
+        puntosObtenidos: Int,
+        puntajeTotal: Int
+    ): Double {
+
+        if (puntajeTotal <= 0) return 0.0
+
+        return (puntosObtenidos.toDouble() / puntajeTotal) * 100
+    }
+    fun calcularPuntosObtenidos(
+        respuestasCorrectas: List<Activity>
+    ): Int {
+        return respuestasCorrectas.sumOf { it.puntajeMaximo }
+    }
+    fun actualizarPuntajeTotal(
+        activities: List<Activity>
+    ) {
+        puntajeTotalActual =
+            calcularPuntajeTotal(activities)
+    }
+
+
     fun saveActivity(sessionId: String, onSuccess: () -> Unit) {
         if (enunciado.isBlank()) {
             errorMessage = "El enunciado no puede estar vacío."
             return
         }
 
+
+
         val puntaje = puntajeMaximo.toIntOrNull() ?: 0
         if (puntaje <= 0) {
             errorMessage = "El puntaje máximo debe ser un número mayor a 0."
+            return
+        }
+
+        val valorPorcentaje = porcentaje.toIntOrNull() ?: 0
+        if (valorPorcentaje < 0 || valorPorcentaje > 100) {
+            errorMessage = "El porcentaje debe estar entre 0 y 100."
             return
         }
 
@@ -171,6 +211,9 @@ class CreateActivityViewModel : ViewModel() {
                 errorMessage = "Error al obtener actividades: $getError"
                 return@getActivitiesForSession
             }
+            actualizarPuntajeTotal(activities)
+            val puntajeTotalActual= calcularPuntajeTotal(activities)
+            val nuevoPuntajeTotal = puntajeTotalActual + puntaje
 
             val newOrder = activities.size + 1
             
@@ -183,7 +226,9 @@ class CreateActivityViewModel : ViewModel() {
                 cantidad = 1,
                 orden = newOrder,
                 contenido = contenido,
-                puntajeMaximo = puntaje
+                puntajeMaximo = puntaje,
+                porcentaje = valorPorcentaje,
+                feedback = feedback
             )
 
             sessionRepository.addActivityToSession(sessionId, activity) { success, addError ->

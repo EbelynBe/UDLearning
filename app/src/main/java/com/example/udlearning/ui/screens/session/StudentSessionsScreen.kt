@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,10 @@ fun StudentSessionsScreen(
     navController: NavController,
     viewModel: StudentSessionsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.fetchStudentSessions()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,7 +80,10 @@ fun StudentSessionsScreen(
             }
         } else if (viewModel.filteredSessions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text("No se encontraron sesiones.", color = White)
+                Text(
+                    "No se encontraron sesiones.",
+                    color = White
+                )
             }
         } else {
             LazyColumn(
@@ -135,9 +143,6 @@ fun SessionCard(session: Session, onClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd MMM", Locale("es", "ES"))
     val startDateStr = session.fechaInicio?.toDate()?.let { formatter.format(it) } ?: "N/A"
     val endDateStr = session.fechaFin?.toDate()?.let { formatter.format(it) } ?: "N/A"
-    
-    // Attempting to match formatting: "Inglés I - 20-26 Abr"
-    val subtitleText = "${session.nivel} · $startDateStr - $endDateStr"
 
     Card(
         modifier = Modifier
@@ -146,40 +151,64 @@ fun SessionCard(session: Session, onClick: () -> Unit) {
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828)) // Darker red background
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = session.titulo,
-                    color = White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                Text(
-                    text = subtitleText,
-                    color = Color(0xCCFFFFFF),
-                    fontSize = 14.sp
-                )
-            }
-            
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(statusColor)
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = statusText,
-                    color = White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = session.titulo,
+                        color = White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Nivel Label
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x33FFFFFF))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = session.nivel,
+                                color = White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        Text(
+                            text = "$startDateStr - $endDateStr",
+                            color = Color(0xCCFFFFFF),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(statusColor)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = statusText,
+                        color = White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

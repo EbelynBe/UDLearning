@@ -22,10 +22,10 @@ class SolveSessionViewModel : ViewModel() {
     var currentIndex by mutableStateOf(0)
         private set
 
-    var score by mutableStateOf(0)
+    var score by mutableStateOf(0f)
         private set
 
-    var totalPossibleScore by mutableStateOf(0)
+    var totalPossibleScore by mutableStateOf(100f)
         private set
 
     var isFinished by mutableStateOf(false)
@@ -41,11 +41,13 @@ class SolveSessionViewModel : ViewModel() {
     private var currentSessionId: String = ""
     private var sessionTitle: String = ""
 
+    private var isEvaluationSession = false
+
     fun loadActivities(sessionId: String) {
         isLoading = true
         errorMessage = null
         currentIndex = 0
-        score = 0
+        score = 0f
         isFinished = false
         currentSessionId = sessionId
 
@@ -63,11 +65,18 @@ class SolveSessionViewModel : ViewModel() {
                 return@getActivitiesForSession
             }
             activities = resultList.sortedBy { it.orden }
-            totalPossibleScore = activities.sumOf { it.puntajeMaximo }
-
-            // Get session title for history
+            
+            // Get session info to check if it's an evaluation
             sessionRepository.getSession(sessionId) { session, _ ->
                 sessionTitle = session?.titulo ?: "Sesión"
+                isEvaluationSession = session?.isEvaluation ?: false
+                
+                if (isEvaluationSession) {
+                    totalPossibleScore = 100f // Usually percentages sum to 100
+                    // Optionally verify if sum of porcentaje is 100
+                } else {
+                    totalPossibleScore = activities.sumOf { it.puntajeMaximo }.toFloat()
+                }
                 
                 // Register access start
                 if (currentUser != null) {
@@ -76,7 +85,7 @@ class SolveSessionViewModel : ViewModel() {
                             sessionId = sessionId,
                             userId = currentUser.uid,
                             userName = user?.nombre ?: "Estudiante",
-                            totalPosible = totalPossibleScore
+                            totalPosible = totalPossibleScore.toInt()
                         )
                         sessionRepository.startSessionAccess(access) { accessId ->
                             currentAccessId = accessId
@@ -110,7 +119,11 @@ class SolveSessionViewModel : ViewModel() {
     fun moveToNext(wasCorrect: Boolean) {
         val currentActivity = activities.getOrNull(currentIndex)
         if (currentActivity != null && wasCorrect) {
-            score += currentActivity.puntajeMaximo
+            if (isEvaluationSession) {
+                score += currentActivity.porcentaje.toFloat()
+            } else {
+                score += currentActivity.puntajeMaximo.toFloat()
+            }
         }
 
         if (currentIndex < activities.size - 1) {
@@ -126,14 +139,14 @@ class SolveSessionViewModel : ViewModel() {
         val accessId = currentAccessId ?: return
 
         // 1. Update acceso_sesion
-        sessionRepository.completeSessionAccess(accessId, score) { }
+        sessionRepository.completeSessionAccess(accessId, score.toInt()) { }
 
         // 2. Save user history
         val history = UserHistory(
             sessionId = currentSessionId,
             tema = sessionTitle,
-            puntaje = score,
-            totalPosible = totalPossibleScore
+            puntaje = score.toInt(),
+            totalPosible = totalPossibleScore.toInt()
         )
         // Note: the sessionId is in history, but we need it from the load call. 
         // Let's pass it or store it.

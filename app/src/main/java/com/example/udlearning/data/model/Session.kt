@@ -1,6 +1,7 @@
 package com.example.udlearning.data.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
 
 data class Session(
     val sessionId: String = "",
@@ -14,6 +15,9 @@ data class Session(
     val duracion: Int = 0,
     val creadoPor: String = "",
     val grupos: List<String> = emptyList(),
+    @get:PropertyName("isEvaluation")
+    @set:PropertyName("isEvaluation")
+    var isEvaluation: Boolean = false,
     val fechaCreacion: Timestamp = Timestamp.now()
 )
 
@@ -25,7 +29,9 @@ data class Activity(
     val cantidad: Int = 0,
     val orden: Int = 0,
     val contenido: Map<String, Any> = emptyMap(),
-    val puntajeMaximo: Int = 0
+    val puntajeMaximo: Int = 0,
+    val porcentaje: Int = 0,
+    val feedback: String = ""
 )
 
 data class Participant(

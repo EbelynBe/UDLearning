@@ -23,6 +23,9 @@ class StudentSessionsViewModel : ViewModel() {
     var currentFilter by mutableStateOf("Todas")
         private set
 
+    var showEvaluations by mutableStateOf(false)
+        private set
+
     var isLoading by mutableStateOf(true)
         private set
 
@@ -33,7 +36,8 @@ class StudentSessionsViewModel : ViewModel() {
         fetchStudentSessions()
     }
 
-    private fun fetchStudentSessions() {
+    fun fetchStudentSessions() {
+        isLoading = true
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
             errorMessage = "No se encontró el usuario actual"
@@ -48,7 +52,7 @@ class StudentSessionsViewModel : ViewModel() {
                     if (fetchError != null) {
                         errorMessage = fetchError
                     } else {
-                        sessions = resultList
+                        sessions = resultList.filter { !it.isEvaluation }
                         applyFilter(currentFilter)
                     }
                 }

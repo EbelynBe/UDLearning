@@ -21,6 +21,10 @@ import com.example.udlearning.ui.screens.activity.CreateActivityScreen
 import com.example.udlearning.ui.screens.activity.EditActivityScreen
 import com.example.udlearning.ui.screens.activity.SolveSessionScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.udlearning.ui.screens.assessment.CreateAssessmentScreen
+import com.example.udlearning.ui.screens.assessment.TeacherAssessmentsScreen
+import com.example.udlearning.ui.screens.assessment.StudentAssessmentsScreen
+import com.example.udlearning.ui.screens.assessment.assessment_activities.NewAssessmentScreen
 
 @Composable
 fun AppNavigation() {
@@ -46,6 +50,15 @@ fun AppNavigation() {
         composable("student_sessions") {
             StudentSessionsScreen(navController = navController)
         }
+
+        composable("student_assessments") {
+            StudentAssessmentsScreen(navController = navController)
+        }
+
+        composable("create_assessment"){
+            CreateAssessmentScreen(navController = navController, sessionViewModel = sharedSessionViewModel)
+
+        }
         
         composable("session_activities/{sessionId}") { backStackEntry ->
             val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
@@ -57,6 +70,10 @@ fun AppNavigation() {
         
         composable("teacher_sessions") {
             TeacherSessionsScreen(navController = navController)
+        }
+
+        composable("teacher_assessments") {
+            TeacherAssessmentsScreen(navController = navController)
         }
 
         composable("manage_session/{sessionId}") { backStackEntry ->
@@ -85,6 +102,14 @@ fun AppNavigation() {
         composable("create_activity/{sessionId}") { backStackEntry ->
             val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
             CreateActivityScreen(
+                navController = navController,
+                sessionId = sessionId
+            )
+        }
+
+        composable("new_assessment_activity/{sessionId}") { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            NewAssessmentScreen(
                 navController = navController,
                 sessionId = sessionId
             )

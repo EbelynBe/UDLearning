@@ -76,6 +76,15 @@ fun EditSessionScreen(
                     unfocusedIndicatorColor = Black
                 )
             )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Tiempo máximo (minutos)", color = White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 4.dp))
+            CustomTextField(
+                value = viewModel.duration,
+                onValueChange = viewModel::onDurationChange,
+                placeholder = "Ej: 60",
+                isNumeric = true
+            )
             Spacer(modifier = Modifier.height(8.dp))
 
             Spacer(modifier = Modifier.height(16.dp))

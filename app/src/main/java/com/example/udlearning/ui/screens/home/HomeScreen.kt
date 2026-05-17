@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Class
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.udlearning.data.UserRepository
 import com.example.udlearning.ui.theme.color.*
 import com.google.firebase.auth.FirebaseAuth
@@ -103,12 +106,32 @@ fun HomeScreen(navController: NavController) {
                         icon = Icons.Default.Add,
                         onClick = { navController.navigate("create_session") }
                     )
+
+                    HomeCard(
+                        title = "Crear Evaluacion",
+                        subtitle = "Crea una nueva sesion calificable",
+                        icon = Icons.Default.Assignment,
+                        onClick = {navController.navigate("create_assessment")}
+                    )
+
+                    HomeCard(
+                        title = "Gestionar Evaluaciones",
+                        subtitle = "Ver y calificar evaluaciones",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("teacher_assessments") }
+                    )
                 } else {
                     HomeCard(
                         title = "Mis sesiones",
                         subtitle = "Ve tus clases programadas",
                         icon = Icons.Default.Book,
                         onClick = { navController.navigate("student_sessions") }
+                    )
+                    HomeCard(
+                        title = "Mis Evaluaciones",
+                        subtitle = "Ve tus evaluaciones pendientes y realizadas",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("student_assessments") }
                     )
                 }
 
@@ -121,6 +144,12 @@ fun HomeScreen(navController: NavController) {
             }
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen(navController = rememberNavController())
 }
 
 @Composable

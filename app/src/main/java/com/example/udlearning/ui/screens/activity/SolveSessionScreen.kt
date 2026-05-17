@@ -63,7 +63,7 @@ fun SolveSessionScreen(
                 }
             }
             viewModel.isFinished -> {
-                FinalScoreScreen(viewModel.score, viewModel.totalPossibleScore) {
+                FinalScoreScreen(viewModel.score.toInt(), viewModel.totalPossibleScore.toInt()) {
                     navController.popBackStack()
                 }
             }

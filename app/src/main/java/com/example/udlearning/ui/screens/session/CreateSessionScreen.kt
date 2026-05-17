@@ -21,6 +21,9 @@ fun CreateSessionScreen(
     navController: NavController,
     sessionViewModel: SessionViewModel
 ) {
+    LaunchedEffect(Unit) {
+        sessionViewModel.setIsEvaluation(false)
+    }
 
     Column(
         modifier = Modifier
@@ -72,6 +75,16 @@ fun CreateSessionScreen(
                     focusedIndicatorColor = Black,
                     unfocusedIndicatorColor = Black
                 )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Tiempo máximo (minutos)", color = White, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = 4.dp))
+            CustomTextField(
+                value = sessionViewModel.duration,
+                onValueChange = sessionViewModel::onDurationChange,
+                placeholder = "Ej: 60",
+                isNumeric = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))

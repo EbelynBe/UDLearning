@@ -70,11 +70,24 @@ fun ManageSessionScreen(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    
+                    val activitiesLabel = if (viewModel.activityCount == 1) "actividad" else "actividades"
+                    val groupsLabel = if (session.grupos.size == 1) "grupo" else "grupos"
+                    val pointsLabel = if (viewModel.totalMaxPoints == 1) "punto" else "puntos"
+                    val durationText = if (session.duracion > 0) " · ${session.duracion} min." else ""
+                    
+                    Text(
+                        text = "${viewModel.activityCount} $activitiesLabel · ${session.grupos.size} $groupsLabel · ${viewModel.totalMaxPoints} $pointsLabel máx.$durationText",
+                        color = Color(0xCCFFFFFF),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
                     Text(
                         text = "${session.nivel} · ${session.tema}",
                         color = Color(0xCCFFFFFF),
                         fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                        modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
                     )
                     Box(
                         modifier = Modifier
@@ -103,7 +116,12 @@ fun ManageSessionScreen(
             // Crear Actividad
             Card(
                 modifier = Modifier.fillMaxWidth().clickable {
-                    navController.navigate("create_activity/${session.sessionId}")
+                    val route = if (session.isEvaluation) {
+                        "new_assessment_activity/${session.sessionId}"
+                    } else {
+                        "create_activity/${session.sessionId}"
+                    }
+                    navController.navigate(route)
                 }.padding(bottom = 16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828))
@@ -119,6 +137,29 @@ fun ManageSessionScreen(
                     Column {
                         Text("Crear actividad", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Text("Añadir un nuevo ejercicio a la sesión", color = Color(0xCCFFFFFF), fontSize = 12.sp)
+                    }
+                }
+            }
+
+            // Ver Actividades
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    navController.navigate("session_activities/${session.sessionId}")
+                }.padding(bottom = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828))
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFF2196F3)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("👁", color = White, fontSize = 20.sp)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Ver actividades", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Visualiza las preguntas añadidas a esta sesión", color = Color(0xCCFFFFFF), fontSize = 12.sp)
                     }
                 }
             }

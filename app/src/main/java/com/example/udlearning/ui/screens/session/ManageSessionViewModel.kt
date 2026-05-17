@@ -41,6 +41,8 @@ class ManageSessionViewModel : ViewModel() {
         private set
     var endDate by mutableStateOf("")
         private set
+    var duration by mutableStateOf("")
+        private set
     var availableGroups = mutableStateListOf<Group>()
         private set
     var selectedGroupIds = mutableStateListOf<String>()
@@ -61,11 +63,21 @@ class ManageSessionViewModel : ViewModel() {
     var accessRecords = mutableStateListOf<com.example.udlearning.data.model.SessionAccess>()
         private set
 
+    var activityCount by mutableStateOf(0)
+        private set
+
+    var totalMaxPoints by mutableStateOf(0)
+        private set
+
     fun loadStatistics() {
         val sessionId = session?.sessionId ?: return
         sessionRepository.getSessionAccessRecords(sessionId) { records, _ ->
             accessRecords.clear()
             accessRecords.addAll(records)
+        }
+        sessionRepository.getActivitiesForSession(sessionId) { activities, _ ->
+            activityCount = activities.size
+            totalMaxPoints = activities.sumOf { it.puntajeMaximo }
         }
     }
         
@@ -76,6 +88,11 @@ class ManageSessionViewModel : ViewModel() {
     fun onEstadoChange(value: String) { estado = value }
     fun onStartDateChange(value: String) { startDate = value }
     fun onEndDateChange(value: String) { endDate = value }
+    fun onDurationChange(value: String) {
+        if (value.all { it.isDigit() }) {
+            duration = value
+        }
+    }
     
     /** Returns the epoch-millis (UTC+0 noon) for the stored startDate string, or null if empty/unparseable. */
     fun startDateMillis(): Long? = parseDateToUtcMillis(startDate)
@@ -123,6 +140,7 @@ class ManageSessionViewModel : ViewModel() {
                     val fmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                     startDate = it.fechaInicio?.toDate()?.let { d -> fmt.format(d) } ?: ""
                     endDate = it.fechaFin?.toDate()?.let { d -> fmt.format(d) } ?: ""
+                    duration = it.duracion.toString()
                     selectedGroupIds.clear()
                     selectedGroupIds.addAll(it.grupos)
                     loadStatistics()
@@ -207,6 +225,7 @@ class ManageSessionViewModel : ViewModel() {
             estado = estado,
             fechaInicio = Timestamp(startParsed),
             fechaFin = Timestamp(endParsed),
+            duracion = duration.toIntOrNull() ?: 0,
             grupos = selectedGroupIds.toList()
         )
 

@@ -17,12 +17,16 @@ import com.example.udlearning.ui.theme.color.Black
 import com.example.udlearning.ui.theme.color.GrayField
 
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+
 @Composable
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    isNumeric: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
@@ -32,6 +36,10 @@ fun CustomTextField(
             PasswordVisualTransformation()
         else
             VisualTransformation.None,
+        keyboardOptions = if (isNumeric) 
+            KeyboardOptions(keyboardType = KeyboardType.Number)
+        else 
+            KeyboardOptions.Default,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),

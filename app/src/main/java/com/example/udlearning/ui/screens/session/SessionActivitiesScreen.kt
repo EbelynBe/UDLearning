@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.udlearning.data.model.Activity
 import com.example.udlearning.data.model.Session
 import com.example.udlearning.ui.theme.color.*
@@ -160,82 +162,131 @@ fun SessionActivitiesScreen(
     }
 }
 
+
 @Composable
 fun ActivityCard(activity: Activity, isTeacher: Boolean = false, onEdit: () -> Unit = {}) {
-    val tagColor = when(activity.cantidad) {
-        5 -> GreenTag
-        else -> OrangeTag
+    val tagColor = when (activity.cantidad) {
+        in 0..3 -> OrangeTag
+        else -> GreenTag
     }
-    
-    val suffix = when (activity.tipo.lowercase()) {
-        "quiz" -> "preguntas"
-        "completar" -> "ejercicios"
-        "emparejamiento" -> "pares"
-        else -> "elementos"
-    }
+
+    val typeLabel = activity.tipo.replaceFirstChar { it.uppercase() }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { if (isTeacher) onEdit() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { if (isTeacher) onEdit() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFC62828)) // Transparent dark red
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                Text(
-                    text = activity.titulo,
-                    color = White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
-                // Process description for students to hide answers
-                val displayDescription = if (!isTeacher && activity.tipo == "completar") {
-                    activity.descripcion.replace("\\[(.*?)\\]".toRegex(), "__________")
-                } else {
-                    activity.descripcion
-                }
-
-                Text(
-                    text = displayDescription,
-                    color = androidx.compose.ui.graphics.Color(0xCCFFFFFF),
-                    fontSize = 14.sp
-                )
-            }
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isTeacher) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(OrangeTag)
-                            .clickable { onEdit() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "✎", color = White, fontSize = 16.sp)
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = activity.titulo,
+                            color = White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // Type Label
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x33FFFFFF))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(text = typeLabel, color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
+
+                    val displayDescription = if (!isTeacher && activity.tipo == "completar") {
+                        activity.descripcion.replace("\\[(.*?)\\]".toRegex(), "__________")
+                    } else {
+                        activity.descripcion
+                    }
+
+                    Text(
+                        text = displayDescription,
+                        color = Color(0xCCFFFFFF),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
-                
+
+                // Question Counter
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(tagColor)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .background(tagColor),
+                    contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "${activity.cantidad}", color = White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text(text = suffix, color = White, fontSize = 10.sp)
+                        Text(text = "${activity.cantidad}", color = White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "item", color = White, fontSize = 8.sp)
                     }
+                }
+            }
+
+            // Detailed view for teachers
+            if (isTeacher && activity.contenido.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = Color(0x1AFFFFFF))
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "CONTENIDO CONFIGURADO:",
+                    color = Color(0x99FFFFFF),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                activity.contenido.forEach { (key, value) ->
+                    val questionText = when (activity.tipo) {
+                        "quiz" -> {
+                            val data = value as? Map<*, *>
+                            val q = data?.get("pregunta") ?: key
+                            "• $q"
+                        }
+                        "emparejamiento" -> "• $key → $value"
+                        "traduccion" -> "• $key = $value"
+                        else -> "• $key: $value"
+                    }
+                    Text(
+                        text = questionText,
+                        color = White,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                
+                if (isTeacher) {
+                    Text(
+                        text = "✎ Toca para editar",
+                        color = OrangeTag,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun SessionActivitiesScreenPreview() {
+    val navController = rememberNavController()
+    SessionActivitiesScreen(
+        navController = navController,
+        sessionId = "preview_session_id"
+    )
 }
