@@ -52,6 +52,7 @@ class SolveSessionViewModel : ViewModel() {
         score = 0f
         isFinished = false
         currentSessionId = sessionId
+        userAnswers.clear() // Limpiar respuestas previas si existen
 
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -112,7 +113,7 @@ class SolveSessionViewModel : ViewModel() {
             "emparejamiento" -> {
                 @Suppress("UNCHECKED_CAST")
                 val pares = activity.contenido["pares"] as? List<Map<String, String>> ?: emptyList()
-                pares.joinToString("\n") { "${it["concepto"]} → ${it["respuesta"]}" }
+                pares.joinToString(" | ") { "${it["concepto"]} → ${it["respuesta"]}" }
             }
             else -> ""
         }
