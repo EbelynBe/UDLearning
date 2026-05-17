@@ -147,16 +147,40 @@ fun SessionActivitiesScreen(
         }
         
         if (!viewModel.isTeacher && viewModel.activities.isNotEmpty()) {
-            Button(
-                onClick = { navController.navigate("solve_session/${sessionId}") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ButtonBackground)
-            ) {
-                Text("Empezar actividades", color = DarkGrayText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (viewModel.isAlreadyCompleted) {
+                Button(
+                    onClick = { navController.navigate("review_session/${sessionId}") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text(
+                        text = "Revisar evaluación",
+                        color = White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                Button(
+                    onClick = { navController.navigate("solve_session/${sessionId}") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonBackground)
+                ) {
+                    Text(
+                        text = if (viewModel.session?.isEvaluation == true) "Empezar evaluación" else "Empezar actividades",
+                        color = DarkGrayText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

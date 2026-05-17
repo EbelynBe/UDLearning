@@ -218,6 +218,19 @@ class SessionRepository {
             .addOnFailureListener { onResult(false) }
     }
 
+    fun completeSessionAccessWithAnswers(accessId: String, score: Int, respuestas: List<com.example.udlearning.data.model.UserAnswer>, onResult: (Boolean) -> Unit) {
+        db.collection("acceso_sesion")
+            .document(accessId)
+            .update(
+                "estado", "completada",
+                "puntaje", score,
+                "fechaCompletado", com.google.firebase.Timestamp.now(),
+                "respuestas", respuestas
+            )
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
+
     fun saveUserHistory(userId: String, history: UserHistory, onResult: (Boolean) -> Unit) {
         db.collection("users")
             .document(userId)

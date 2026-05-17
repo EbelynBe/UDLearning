@@ -9,6 +9,7 @@ import com.example.udlearning.data.UserRepository
 import com.example.udlearning.data.model.Activity
 import com.example.udlearning.data.model.Participant
 import com.example.udlearning.data.model.Session
+import com.example.udlearning.data.model.SessionAccess
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import java.util.Date
@@ -28,6 +29,9 @@ class SessionActivitiesViewModel : ViewModel() {
         private set
 
     var isLoading by mutableStateOf(true)
+        private set
+
+    var isAlreadyCompleted by mutableStateOf(false)
         private set
 
     // null = no error | string = error/info message to show (blocks access)
@@ -114,28 +118,48 @@ class SessionActivitiesViewModel : ViewModel() {
                     return@getSession
                 }
 
-                // --- All checks passed: load activities ---
-                sessionRepository.getActivitiesForSession(sessionId) { resultList, actError ->
-                    if (actError != null) {
-                        accessError = actError
-                        isLoading = false
-                        return@getActivitiesForSession
+                // --- Validation 4: if evaluation, check if already completed ---
+                if (sess.isEvaluation) {
+                    sessionRepository.getSessionAccessRecords(sessionId) { records, _ ->
+                        val userRecord = records.find { it.userId == currentUser.uid }
+                        if (userRecord != null && userRecord.estado == "completada") {
+                            isAlreadyCompleted = true
+                            // Don't block access with accessError if it's an evaluation, 
+                            // we want them to see the "Review" button
+                            loadActivitiesForStudent(sessionId, studentGroupId, currentUser.uid)
+                        } else {
+                            loadActivitiesForStudent(sessionId, studentGroupId, currentUser.uid)
+                        }
                     }
-
-                    activities = resultList.sortedBy { it.orden }
-
-                    // --- Register session start in participant history ---
-                    val participant = Participant(
-                        userId = currentUser.uid,
-                        groupId = studentGroupId,
-                        estado = "activo",
-                        fechaIngreso = Timestamp.now()
-                    )
-                    sessionRepository.addParticipantToSession(sessionId, participant) { _, _ -> }
-
-                    isLoading = false
+                } else {
+                    loadActivitiesForStudent(sessionId, studentGroupId, currentUser.uid)
                 }
             }
+        }
+    }
+
+    private fun loadActivitiesForStudent(sessionId: String, studentGroupId: String, userId: String) {
+        sessionRepository.getActivitiesForSession(sessionId) { resultList, actError ->
+            if (actError != null) {
+                accessError = actError
+                isLoading = false
+                return@getActivitiesForSession
+            }
+
+            activities = resultList.sortedBy { it.orden }
+
+            // Solo registrar participación si no se ha completado antes
+            if (!isAlreadyCompleted) {
+                val participant = Participant(
+                    userId = userId,
+                    groupId = studentGroupId,
+                    estado = "activo",
+                    fechaIngreso = Timestamp.now()
+                )
+                sessionRepository.addParticipantToSession(sessionId, participant) { _, _ -> }
+            }
+
+            isLoading = false
         }
     }
 

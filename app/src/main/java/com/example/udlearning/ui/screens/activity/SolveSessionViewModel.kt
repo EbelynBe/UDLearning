@@ -8,6 +8,7 @@ import com.example.udlearning.data.SessionRepository
 import com.example.udlearning.data.UserRepository
 import com.example.udlearning.data.model.Activity
 import com.example.udlearning.data.model.SessionAccess
+import com.example.udlearning.data.model.UserAnswer
 import com.example.udlearning.data.model.UserHistory
 import com.google.firebase.auth.FirebaseAuth
 
@@ -42,6 +43,7 @@ class SolveSessionViewModel : ViewModel() {
     private var sessionTitle: String = ""
 
     private var isEvaluationSession = false
+    private val userAnswers = mutableListOf<UserAnswer>()
 
     fun loadActivities(sessionId: String) {
         isLoading = true
@@ -116,13 +118,26 @@ class SolveSessionViewModel : ViewModel() {
         }
     }
 
-    fun moveToNext(wasCorrect: Boolean) {
+    fun moveToNext(wasCorrect: Boolean, userRawAnswer: Any? = null) {
         val currentActivity = activities.getOrNull(currentIndex)
-        if (currentActivity != null && wasCorrect) {
-            if (isEvaluationSession) {
-                score += currentActivity.porcentaje.toFloat()
-            } else {
-                score += currentActivity.puntajeMaximo.toFloat()
+        if (currentActivity != null) {
+            // Track answer
+            userAnswers.add(
+                UserAnswer(
+                    activityId = currentActivity.activityId,
+                    activityType = currentActivity.tipo,
+                    userAnswer = userRawAnswer,
+                    isCorrect = wasCorrect,
+                    correctAnswer = getCorrectAnswerText(currentActivity)
+                )
+            )
+
+            if (wasCorrect) {
+                if (isEvaluationSession) {
+                    score += currentActivity.porcentaje.toFloat()
+                } else {
+                    score += currentActivity.puntajeMaximo.toFloat()
+                }
             }
         }
 
@@ -138,8 +153,8 @@ class SolveSessionViewModel : ViewModel() {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val accessId = currentAccessId ?: return
 
-        // 1. Update acceso_sesion
-        sessionRepository.completeSessionAccess(accessId, score.toInt()) { }
+        // 1. Update acceso_sesion with answers
+        sessionRepository.completeSessionAccessWithAnswers(accessId, score.toInt(), userAnswers) { }
 
         // 2. Save user history
         val history = UserHistory(

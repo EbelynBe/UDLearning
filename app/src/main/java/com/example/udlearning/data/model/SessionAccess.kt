@@ -11,5 +11,6 @@ data class SessionAccess(
     val puntaje: Int = 0,
     val totalPosible: Int = 0,
     val fechaInicio: Timestamp = Timestamp.now(),
-    val fechaCompletado: Timestamp? = null
+    val fechaCompletado: Timestamp? = null,
+    val respuestas: List<UserAnswer> = emptyList()
 )

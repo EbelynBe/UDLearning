@@ -87,6 +87,7 @@ fun SolveSessionScreen(
 
                     var isValid by remember(currentActivity.activityId) { mutableStateOf(false) }
                     var hasSelected by remember(currentActivity.activityId) { mutableStateOf(false) }
+                    var lastUserAnswerRaw by remember(currentActivity.activityId) { mutableStateOf<Any?>(null) }
 
                     Column(
                         modifier = Modifier
@@ -104,17 +105,20 @@ fun SolveSessionScreen(
                         }
 
                         when (currentActivity.tipo) {
-                            "quiz" -> SolveQuizForm(currentActivity) { valid, selected -> 
+                            "quiz" -> SolveQuizForm(currentActivity) { valid, selected, raw -> 
                                 isValid = valid
                                 hasSelected = selected 
+                                lastUserAnswerRaw = raw
                             }
-                            "completar", "traduccion" -> SolveStringForm(currentActivity, viewModel) { valid, selected -> 
+                            "completar", "traduccion" -> SolveStringForm(currentActivity, viewModel) { valid, selected, raw -> 
                                 isValid = valid
                                 hasSelected = selected
+                                lastUserAnswerRaw = raw
                             }
-                            "emparejamiento" -> SolveMatchingForm(currentActivity) { valid, selected -> 
+                            "emparejamiento" -> SolveMatchingForm(currentActivity) { valid, selected, raw -> 
                                 isValid = valid
                                 hasSelected = selected
+                                lastUserAnswerRaw = raw
                             }
                             else -> Text("Tipo no soportado: ${currentActivity.tipo}", color = White)
                         }
@@ -153,7 +157,7 @@ fun SolveSessionScreen(
                             isLastActivity = viewModel.currentIndex == viewModel.activities.size - 1,
                             onContinue = {
                                 showFeedback = false
-                                viewModel.moveToNext(lastAnswerIsValid)
+                                viewModel.moveToNext(lastAnswerIsValid, lastUserAnswerRaw)
                             }
                         )
                     }
@@ -272,7 +276,7 @@ fun FeedbackBottomSheet(
 }
 
 @Composable
-fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Unit) {
+fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean, Boolean, Any?) -> Unit) {
     val options = activity.contenido["opciones"] as? List<String> ?: emptyList()
     val correctAnswer = activity.contenido["respuesta_correcta"] as? String ?: ""
     var selectedOption by remember(activity.activityId) { mutableStateOf<String?>(null) }
@@ -280,7 +284,7 @@ fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Un
     LaunchedEffect(selectedOption, activity.activityId) {
         val isValid = selectedOption?.trim().equals(correctAnswer.trim(), ignoreCase = true)
         val hasSelected = selectedOption != null
-        onValidityChange(isValid, hasSelected)
+        onValidityChange(isValid, hasSelected, selectedOption)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -306,7 +310,7 @@ fun SolveQuizForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Un
 }
 
 @Composable
-fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onValidityChange: (Boolean, Boolean) -> Unit) {
+fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onValidityChange: (Boolean, Boolean, Any?) -> Unit) {
     val expectedAnswer = activity.contenido["respuesta_esperada"] as? String ?: ""
     val pregunta = activity.contenido["pregunta"] as? String ?: ""
     var input by remember(activity.activityId) { mutableStateOf("") }
@@ -315,7 +319,7 @@ fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onVali
         val isValid = viewModel.verifyStringAnswer(input, expectedAnswer)
         // Validation: Empty space is always incorrect/invalid
         val hasSelected = input.isNotBlank()
-        onValidityChange(isValid && hasSelected, hasSelected)
+        onValidityChange(isValid && hasSelected, hasSelected, input)
     }
 
     if (activity.tipo == "completar" && pregunta.contains("__________")) {
@@ -373,7 +377,7 @@ fun SolveStringForm(activity: Activity, viewModel: SolveSessionViewModel, onVali
 }
 
 @Composable
-fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean, Boolean) -> Unit) {
+fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean, Boolean, Any?) -> Unit) {
     val pares = activity.contenido["pares"] as? List<Map<String, String>> ?: emptyList()
     val concepts = remember(activity.activityId) { pares.map { it["concepto"] ?: "" } }
     val answers = remember(activity.activityId) { pares.map { it["respuesta"] ?: "" }.shuffled() }
@@ -400,7 +404,7 @@ fun SolveMatchingForm(activity: Activity, onValidityChange: (Boolean, Boolean) -
             }
         }
         val hasSelected = matches.isNotEmpty()
-        onValidityChange(isAllCorrect, hasSelected)
+        onValidityChange(isAllCorrect, hasSelected, matches.toMap())
     }
 
     LaunchedEffect(selectedConcept, selectedAnswer, activity.activityId) {

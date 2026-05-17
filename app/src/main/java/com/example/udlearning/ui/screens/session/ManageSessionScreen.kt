@@ -16,9 +16,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
 import com.example.udlearning.data.model.Session
 import com.example.udlearning.ui.components.TitleHeader
 import com.example.udlearning.ui.theme.color.*
+import com.example.udlearning.util.ReportUtils
 
 @Composable
 fun ManageSessionScreen(
@@ -36,6 +38,7 @@ fun ManageSessionScreen(
             .background(RedPrimary)
             .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
+        val context = LocalContext.current
         TitleHeader(onBackClick = { navController.popBackStack() })
 
         Text(
@@ -160,6 +163,51 @@ fun ManageSessionScreen(
                     Column {
                         Text("Ver actividades", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Text("Visualiza las preguntas añadidas a esta sesión", color = Color(0xCCFFFFFF), fontSize = 12.sp)
+                    }
+                }
+            }
+
+            // Reporte PDF (Solo para evaluaciones)
+            if (session.isEvaluation) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            ReportUtils.generateSessionReport(context, session, viewModel.accessRecords)
+                        }
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF673AB7)), // Purple for reports
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("📄", color = White, fontSize = 20.sp)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                "Descargar reporte",
+                                color = White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            val recordCount = viewModel.accessRecords.size
+                            val studentsLabel = if (recordCount == 1) "estudiante" else "estudiantes"
+                            Text(
+                                "$recordCount $studentsLabel han realizado la prueba",
+                                color = Color(0xCCFFFFFF),
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }

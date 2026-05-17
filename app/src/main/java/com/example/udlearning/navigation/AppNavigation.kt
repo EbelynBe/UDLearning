@@ -20,6 +20,7 @@ import com.example.udlearning.ui.screens.session.EditSessionScreen
 import com.example.udlearning.ui.screens.activity.CreateActivityScreen
 import com.example.udlearning.ui.screens.activity.EditActivityScreen
 import com.example.udlearning.ui.screens.activity.SolveSessionScreen
+import com.example.udlearning.ui.screens.review.ReviewSessionScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.udlearning.ui.screens.assessment.CreateAssessmentScreen
 import com.example.udlearning.ui.screens.assessment.TeacherAssessmentsScreen
@@ -130,6 +131,14 @@ fun AppNavigation() {
             SolveSessionScreen(
                 navController = navController,
                 sessionId = sessionId
+            )
+        }
+
+        composable("review_session/{sessionId}") { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            ReviewSessionScreen(
+                sessionId = sessionId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
