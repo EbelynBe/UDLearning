@@ -157,16 +157,30 @@ class SolveSessionViewModel : ViewModel() {
         // 1. Update acceso_sesion with answers
         sessionRepository.completeSessionAccessWithAnswers(accessId, score.toInt(), userAnswers) { }
 
-        // 2. Save user history
+        // 2. Save user history (legacy subcollection if needed)
         val history = UserHistory(
             sessionId = currentSessionId,
             tema = sessionTitle,
             puntaje = score.toInt(),
             totalPosible = totalPossibleScore.toInt()
         )
-        // Note: the sessionId is in history, but we need it from the load call. 
-        // Let's pass it or store it.
-        
         sessionRepository.saveUserHistory(currentUser.uid, history) { }
+
+        // 3. Save to the new Sprint 5 HistorialEstudiante global collection
+        val calificacionFinal = if (totalPossibleScore > 0) (score / totalPossibleScore) * 5.0f else 0.0f
+        
+        val sprint5History = com.example.udlearning.data.model.HistorialEstudiante(
+            estudianteId = currentUser.uid,
+            actividadId = currentSessionId, // We use sessionId as the main activity tracker here
+            nombreActividad = sessionTitle,
+            asignatura = "N/A", // This could be fetched from session.grupos ideally
+            tipoRegistro = if (isEvaluationSession) "Evaluación" else "Sesión",
+            fechaRealizacion = System.currentTimeMillis(),
+            estado = "Completada",
+            calificacion = calificacionFinal.toDouble(),
+            retroalimentacion = if (calificacionFinal >= 3.0) "Buen trabajo, sesión completada." else "Sesión completada, pero debes repasar los conceptos."
+        )
+        
+        com.example.udlearning.data.HistorialRepository().saveHistorial(sprint5History) { }
     }
 }

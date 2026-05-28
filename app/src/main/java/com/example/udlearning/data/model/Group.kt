@@ -6,7 +6,8 @@ data class Group(
     val groupId: String = "",
     val nombre: String = "",
     val nivel: String = "",
-    val semestre: String = ""
+    val semestre: String = "",
+    val docenteId: String? = null
 )
 
 data class GroupMember(

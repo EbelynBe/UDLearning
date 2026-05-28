@@ -36,4 +36,55 @@ class UserRepository {
                 onResult(null, exception.message)
             }
     }
+
+    fun getTeachers(onResult: (List<User>, String?) -> Unit) {
+        db.collection("users")
+            .whereIn("rol", listOf("docente", "profesor"))
+            .get()
+            .addOnSuccessListener { result ->
+                val teachers = result.documents.mapNotNull { it.toObject(User::class.java)?.copy(userId = it.id) }
+                onResult(teachers, null)
+            }
+            .addOnFailureListener { exception ->
+                onResult(emptyList(), exception.message)
+            }
+    }
+
+    fun getStudentsByGroup(groupId: String, onResult: (List<User>, String?) -> Unit) {
+        db.collection("users")
+            .whereEqualTo("groupId", groupId)
+            .whereEqualTo("rol", "estudiante")
+            .get()
+            .addOnSuccessListener { result ->
+                val students = result.documents.mapNotNull { it.toObject(User::class.java)?.copy(userId = it.id) }
+                onResult(students, null)
+            }
+            .addOnFailureListener { exception ->
+                onResult(emptyList(), exception.message)
+            }
+    }
+
+    fun getAllUsers(onResult: (List<User>, String?) -> Unit) {
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { result ->
+                val users = result.documents.mapNotNull { it.toObject(User::class.java)?.copy(userId = it.id) }
+                onResult(users, null)
+            }
+            .addOnFailureListener { exception ->
+                onResult(emptyList(), exception.message)
+            }
+    }
+
+    fun deleteUser(userId: String, onResult: (Boolean, String?) -> Unit) {
+        db.collection("users")
+            .document(userId)
+            .delete()
+            .addOnSuccessListener {
+                onResult(true, null)
+            }
+            .addOnFailureListener { exception ->
+                onResult(false, exception.message)
+            }
+    }
 }

@@ -34,4 +34,17 @@ class GroupRepository {
                 onResult(emptyList(), exception.message)
             }
     }
+
+    fun updateGroup(group: Group, onResult: (Boolean, String?) -> Unit) {
+        db.collection("groups")
+            .document(group.groupId)
+            .set(group)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
 }

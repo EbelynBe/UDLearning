@@ -3,6 +3,8 @@ package com.example.udlearning.ui.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -29,7 +31,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    var isTeacher by remember { mutableStateOf<Boolean?>(null) } // null = cargando
+    var isTeacher by remember { mutableStateOf<Boolean?>(null) }
+    var isAdmin by remember { mutableStateOf<Boolean?>(null) }
     var userName by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -38,6 +41,7 @@ fun HomeScreen(navController: NavController) {
             UserRepository().getUser(currentUser.uid) { user, _ ->
                 userName = user?.nombre ?: "Usuario"
                 isTeacher = (user?.rol == "docente" || user?.rol == "profesor")
+                isAdmin = (user?.rol == "administrador" || user?.rol == "admin")
             }
         }
     }
@@ -47,6 +51,7 @@ fun HomeScreen(navController: NavController) {
             .fillMaxSize()
             .background(RedPrimary)
             .padding(24.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         // Header
         Row(
@@ -62,7 +67,7 @@ fun HomeScreen(navController: NavController) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isTeacher == true) "Panel de Docente" else "Panel de Estudiante",
+                    text = if (isAdmin == true) "Panel de Administrador" else if (isTeacher == true) "Panel de Docente" else "Panel de Estudiante",
                     color = Color(0x99FFFFFF),
                     fontSize = 14.sp
                 )
@@ -87,13 +92,32 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        if (isTeacher == null) {
+        if (isTeacher == null && isAdmin == null) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = White)
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (isTeacher == true) {
+                if (isAdmin == true) {
+                    HomeCard(
+                        title = "Gestionar usuarios",
+                        subtitle = "Crea, edita o elimina usuarios",
+                        icon = Icons.Default.AccountCircle,
+                        onClick = { navController.navigate("usuarios") }
+                    )
+                    HomeCard(
+                        title = "Gestionar grupos",
+                        subtitle = "Administra asignaturas y grupos",
+                        icon = Icons.Default.Class,
+                        onClick = { navController.navigate("grupos") }
+                    )
+                    HomeCard(
+                        title = "Configuración",
+                        subtitle = "Parámetros del sistema",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("configuracion") }
+                    )
+                } else if (isTeacher == true) {
                     HomeCard(
                         title = "Mis sesiones",
                         subtitle = "Gestiona tus clases y grupos",
@@ -106,19 +130,30 @@ fun HomeScreen(navController: NavController) {
                         icon = Icons.Default.Add,
                         onClick = { navController.navigate("create_session") }
                     )
-
                     HomeCard(
                         title = "Crear Evaluacion",
                         subtitle = "Crea una nueva sesion calificable",
                         icon = Icons.Default.Assignment,
                         onClick = {navController.navigate("create_assessment")}
                     )
-
                     HomeCard(
                         title = "Gestionar Evaluaciones",
                         subtitle = "Ver y calificar evaluaciones",
                         icon = Icons.Default.Assignment,
                         onClick = { navController.navigate("teacher_assessments") }
+                    )
+                    HomeCard(
+                        title = "Estadísticas grupales",
+                        subtitle = "Ver rendimiento del grupo",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("estadisticas") }
+                    )
+                    // Temporary Config button for testing since Teacher might want to see it
+                    HomeCard(
+                        title = "Configuración",
+                        subtitle = "Parámetros del sistema",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("configuracion") }
                     )
                 } else {
                     HomeCard(
@@ -132,6 +167,18 @@ fun HomeScreen(navController: NavController) {
                         subtitle = "Ve tus evaluaciones pendientes y realizadas",
                         icon = Icons.Default.Assignment,
                         onClick = { navController.navigate("student_assessments") }
+                    )
+                    HomeCard(
+                        title = "Mi historial",
+                        subtitle = "Actividades completadas",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("historial") }
+                    )
+                    HomeCard(
+                        title = "Mi progreso",
+                        subtitle = "Gráficos de rendimiento",
+                        icon = Icons.Default.Assignment,
+                        onClick = { navController.navigate("graficos") }
                     )
                 }
 

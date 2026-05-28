@@ -26,6 +26,12 @@ import com.example.udlearning.ui.screens.assessment.CreateAssessmentScreen
 import com.example.udlearning.ui.screens.assessment.TeacherAssessmentsScreen
 import com.example.udlearning.ui.screens.assessment.StudentAssessmentsScreen
 import com.example.udlearning.ui.screens.assessment.assessment_activities.NewAssessmentScreen
+import com.example.udlearning.ui.screens.historial.HistorialScreen
+import com.example.udlearning.ui.screens.graficos.ProgresoScreen
+import com.example.udlearning.ui.screens.estadisticas.EstadisticasGrupalScreen
+import com.example.udlearning.ui.screens.usuarios.UsuariosScreen
+import com.example.udlearning.ui.screens.grupos.GruposScreen
+import com.example.udlearning.ui.screens.configuracion.ConfiguracionScreen
 
 @Composable
 fun AppNavigation() {
@@ -141,5 +147,13 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        // Sprint 5 Routes
+        composable("historial") { HistorialScreen(navController) }
+        composable("graficos") { ProgresoScreen(navController) }
+        composable("estadisticas") { EstadisticasGrupalScreen(navController) }
+        composable("usuarios") { UsuariosScreen(navController) }
+        composable("grupos") { GruposScreen(navController) }
+        composable("configuracion") { ConfiguracionScreen(navController) }
     }
 }
