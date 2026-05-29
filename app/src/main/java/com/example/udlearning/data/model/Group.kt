@@ -7,7 +7,8 @@ data class Group(
     val nombre: String = "",
     val nivel: String = "",
     val semestre: String = "",
-    val docenteId: String? = null
+    val docenteId: String? = null,
+    val estudianteIds: List<String> = emptyList()
 )
 
 data class GroupMember(

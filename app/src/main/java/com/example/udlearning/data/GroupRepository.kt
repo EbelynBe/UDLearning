@@ -8,6 +8,14 @@ class GroupRepository {
 
     private val db = FirebaseFirestore.getInstance()
 
+    fun createGroup(group: Group, onResult: (Boolean, String?) -> Unit) {
+        val docRef = db.collection("groups").document()
+        val newGroup = group.copy(groupId = docRef.id)
+        docRef.set(newGroup)
+            .addOnSuccessListener { onResult(true, null) }
+            .addOnFailureListener { onResult(false, it.message) }
+    }
+
     fun addGroupMember(groupId: String, member: GroupMember, onResult: (Boolean, String?) -> Unit) {
         db.collection("groups")
             .document(groupId)
@@ -46,5 +54,13 @@ class GroupRepository {
                     onResult(false, task.exception?.message)
                 }
             }
+    }
+
+    fun deleteGroup(groupId: String, onResult: (Boolean, String?) -> Unit) {
+        db.collection("groups")
+            .document(groupId)
+            .delete()
+            .addOnSuccessListener { onResult(true, null) }
+            .addOnFailureListener { onResult(false, it.message) }
     }
 }
